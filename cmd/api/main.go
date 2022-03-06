@@ -1,16 +1,33 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 )
 
-type application struct{}
+type config struct {
+	port int
+}
+
+type application struct {
+	config config
+}
 
 func main() {
-	app := &application{}
-	log.Fatal(http.ListenAndServe(":8080", app.routes()))
+	var cfg config
+	var app application
+
+	flag.IntVar(&cfg.port, "port", 8080, "API server port")
+	flag.Parse()
+
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.port),
+		Handler: app.routes(),
+	}
+	log.Fatal(srv.ListenAndServe())
 }
 
 func (app *application) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
