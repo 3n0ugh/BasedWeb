@@ -13,13 +13,16 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", app.routes()))
 }
 
-func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("works"))
+func (app *application) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	err := app.writeJSON(w, http.StatusOK, envelope{"message": "works"}, r.Header)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func (a *application) routes() http.Handler {
+func (app *application) routes() http.Handler {
 	router := httprouter.New()
 
-	router.HandlerFunc(http.MethodGet, "/v1/health-check", HealthCheckHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/health-check", app.HealthCheckHandler)
 	return router
 }

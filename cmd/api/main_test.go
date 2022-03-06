@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bytes"
+	"encoding/json"
 	"net/http"
+	"reflect"
 	"testing"
 )
 
@@ -13,6 +14,9 @@ func TestHealthCheckHandler(t *testing.T) {
 	ts := newTestServer(t, router)
 	defer ts.Close()
 
+	wantBody, _ := json.MarshalIndent(envelope{"message": "works"}, "", "\t")
+	wantBody = append(wantBody, '\n')
+
 	test := struct {
 		name     string
 		urlPath  string
@@ -22,7 +26,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		name:     "Health Check",
 		urlPath:  "/v1/health-check",
 		wantCode: http.StatusOK,
-		wantBody: []byte("works"),
+		wantBody: wantBody,
 	}
 
 	t.Run(test.name, func(t *testing.T) {
@@ -31,7 +35,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		if code != test.wantCode {
 			t.Errorf("status code -> want: %d; got: %d", test.wantCode, code)
 		}
-		if !bytes.Contains(body, test.wantBody) {
+		if !reflect.DeepEqual(test.wantBody, body) {
 			t.Errorf("body -> want: %q; got: %q", test.wantBody, body)
 		}
 	})

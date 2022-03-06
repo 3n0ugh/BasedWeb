@@ -12,7 +12,7 @@ import (
 type envelope map[string]interface{}
 
 // convert data struct to json type and write into response
-func writeJSON(w http.ResponseWriter, status int, data envelope, header http.Header) error {
+func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, header http.Header) error {
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func writeJSON(w http.ResponseWriter, status int, data envelope, header http.Hea
 }
 
 // read json data and send custom error message if there is an error
-func readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
+func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	// max limit size of byte reading
 	maxBytes := 1_048_576
 
