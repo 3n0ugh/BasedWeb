@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/3n0ugh/BasedWeb/internal/data"
 	"log"
 	"net/http"
 	"time"
@@ -21,6 +22,7 @@ type config struct {
 
 type application struct {
 	config config
+	model  data.Model
 }
 
 func main() {
@@ -42,6 +44,7 @@ func main() {
 
 	app := &application{
 		config: cfg,
+		model:  data.NewModel(db),
 	}
 
 	srv := &http.Server{
