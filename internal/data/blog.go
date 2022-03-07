@@ -22,7 +22,7 @@ type BlogModel struct {
 
 func (b BlogModel) Insert(blog *Blog) error {
 	query := `INSERT INTO blogs (title, body, category)
-		VALUES ($1, $2)
+		VALUES ($1, $2, $3)
         RETURNING id, created_at, version`
 
 	args := []interface{}{blog.Title, blog.Body, pq.Array(blog.Category)}
