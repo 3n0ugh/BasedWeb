@@ -12,5 +12,7 @@ type Model struct {
 }
 
 func NewModel(db *sql.DB) Model {
-	return Model{}
+	return Model{
+		Blog: BlogModel{DB: db},
+	}
 }

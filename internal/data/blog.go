@@ -3,6 +3,12 @@ package data
 import "database/sql"
 
 type Blog struct {
+	ID        int64     `json:"id"`
+	CreatedAt time.Time `json:"-"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	Category  []string  `json:"category"`
+	Version   int32     `json:"version,omitempty"`
 }
 
 type BlogModel struct {
