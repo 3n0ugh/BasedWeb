@@ -11,15 +11,20 @@ import (
 
 type envelope map[string]interface{}
 
-// convert data struct to json type and write into response
-func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, header http.Header) error {
+// take the enveloped map data and marshall it and return it.
+func (app *application) prettyJSON(data envelope) ([]byte, error) {
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	js = append(js, '\n')
 
+	return js, err
+}
+
+// take the json data and write it into response
+func (app *application) writeJSON(w http.ResponseWriter, status int, jsonData []byte, header http.Header) error {
 	for k, v := range header {
 		w.Header()[k] = v
 	}
@@ -27,7 +32,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	_, err = w.Write(js)
+	_, err := w.Write(jsonData)
 	if err != nil {
 		return err
 	}

@@ -8,7 +8,13 @@ import (
 )
 
 func (app *application) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	err := app.writeJSON(w, http.StatusOK, envelope{"message": "works"}, r.Header)
+	jsonData, err := app.prettyJSON(envelope{"message": "works"})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, jsonData, r.Header)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -45,7 +51,13 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/blogs/%d", blog.ID))
 
-	err = app.writeJSON(w, http.StatusCreated, envelope{"blog": blog}, headers)
+	jsonData, err := app.prettyJSON(envelope{"blog": blog})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusCreated, jsonData, headers)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

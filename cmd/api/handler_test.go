@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"reflect"
 	"testing"
@@ -9,13 +8,14 @@ import (
 
 func TestHealthCheckHandler(t *testing.T) {
 	app := newTestApplication(t)
-	router := app.routes()
 
-	ts := newTestServer(t, router)
+	ts := newTestServer(t, app.routes())
 	defer ts.Close()
 
-	wantBody, _ := json.MarshalIndent(envelope{"message": "works"}, "", "\t")
-	wantBody = append(wantBody, '\n')
+	wantBody, err := app.prettyJSON(envelope{"message": "works"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	test := struct {
 		name     string
