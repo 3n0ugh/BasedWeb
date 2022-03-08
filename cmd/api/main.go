@@ -6,8 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/3n0ugh/BasedWeb/internal/data"
-	"log"
+	"github.com/3n0ugh/BasedWeb/internal/jsonlog"
 	"net/http"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -22,6 +23,7 @@ type config struct {
 
 type application struct {
 	config config
+	logger *jsonlog.Logger
 	model  data.Model
 }
 
@@ -32,9 +34,11 @@ func main() {
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "", "PostgreSQL DSN")
 	flag.Parse()
 
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+
 	db, err := openDB(cfg)
 	if err != nil {
-		log.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 	defer func() {
 		if err := db.Close(); err != nil {
@@ -42,8 +46,11 @@ func main() {
 		}
 	}()
 
+	logger.PrintInfo("database connection pool established", nil)
+
 	app := &application{
 		config: cfg,
+		logger: logger,
 		model:  data.NewModel(db),
 	}
 
@@ -51,7 +58,7 @@ func main() {
 		Addr:    fmt.Sprintf(":%d", cfg.port),
 		Handler: app.routes(),
 	}
-	log.Fatal(srv.ListenAndServe())
+	logger.PrintFatal(srv.ListenAndServe(), nil)
 }
 
 func openDB(cfg config) (*sql.DB, error) {
