@@ -10,13 +10,13 @@ import (
 func (app *application) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	jsonData, err := app.prettyJSON(envelope{"message": "works"})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, jsonData, r.Header)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 	}
 }
 
@@ -32,7 +32,7 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 
 	err := app.readJSON(w, r, &input)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
@@ -44,7 +44,7 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 
 	err = app.model.Blog.Insert(blog)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -53,13 +53,13 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 
 	jsonData, err := app.prettyJSON(envelope{"blog": blog})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	err = app.writeJSON(w, http.StatusCreated, jsonData, headers)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 }
