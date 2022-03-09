@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/3n0ugh/BasedWeb/internal/data"
 	"github.com/3n0ugh/BasedWeb/internal/validator"
@@ -60,4 +61,35 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 		app.serverErrorResponse(w, r, err)
 		return
 	}
+}
+
+func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
+	if err != nil || id < 1 {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	blog, err := app.model.Blog.Get(id)
+	if err != nil {
+		if errors.Is(err, data.ErrRecordNotFound) {
+			app.notFoundResponse(w, r)
+			return
+		}
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"blog": blog}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+}
+
+// TODO: Delete blog inorder to given id
+func (app *application) deleteBlogHandler(w http.ResponseWriter, r *http.Request) {
+
 }
