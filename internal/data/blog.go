@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"github.com/3n0ugh/BasedWeb/internal/validator"
 	"github.com/lib/pq"
 	"time"
 )
@@ -14,6 +15,19 @@ type Blog struct {
 	Body      string    `json:"body"`
 	Category  []string  `json:"category"`
 	Version   int32     `json:"version,omitempty"`
+}
+
+func ValidateBlog(v *validator.Validator, blog *Blog) {
+	v.Check(blog.Title != "", "title", "must be provided")
+	v.Check(len(blog.Title) <= 80, "title", "must not be more than 80 bytes long")
+
+	v.Check(blog.Body != "", "body", "must be provided")
+	v.Check(len(blog.Body) <= 1000000, "body", "must not be more than 100000 bytes long")
+
+	v.Check(blog.Category != nil, "genres", "must be provided")
+	v.Check(len(blog.Category) >= 1, "genres", "must contain at least 1 genre")
+	v.Check(len(blog.Category) <= 5, "genres", "must not contain more than 5 genres")
+	v.Check(validator.Unique(blog.Category), "genres", "must not contain duplicate genres")
 }
 
 type BlogModel struct {
