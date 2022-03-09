@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"github.com/3n0ugh/BasedWeb/internal/data"
 	"github.com/3n0ugh/BasedWeb/internal/validator"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -64,10 +62,8 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
-	if err != nil || id < 1 {
+	id, err := app.readParamID(r)
+	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
