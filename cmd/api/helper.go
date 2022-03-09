@@ -24,7 +24,14 @@ func (app *application) prettyJSON(data envelope) ([]byte, error) {
 }
 
 // take the json data and write it into response
-func (app *application) writeJSON(w http.ResponseWriter, status int, jsonData []byte, header http.Header) error {
+func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, header http.Header) error {
+	js, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		return err
+	}
+
+	js = append(js, '\n')
+
 	for k, v := range header {
 		w.Header()[k] = v
 	}
@@ -32,7 +39,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, jsonData []
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	_, err := w.Write(jsonData)
+	_, err = w.Write(js)
 	if err != nil {
 		return err
 	}

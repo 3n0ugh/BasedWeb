@@ -4,18 +4,14 @@ import (
 	"fmt"
 	"github.com/3n0ugh/BasedWeb/internal/data"
 	"github.com/3n0ugh/BasedWeb/internal/validator"
+	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 func (app *application) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	jsonData, err := app.prettyJSON(envelope{"message": "works"})
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusOK, jsonData, r.Header)
+	err := app.writeJSON(w, http.StatusOK, envelope{"message": "works"}, r.Header)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -59,13 +55,7 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 	headers := make(http.Header)
 	headers.Set("Location", fmt.Sprintf("/v1/blogs/%d", blog.ID))
 
-	jsonData, err := app.prettyJSON(envelope{"blog": blog})
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusCreated, jsonData, headers)
+	err = app.writeJSON(w, http.StatusCreated, envelope{"blog": blog}, headers)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
