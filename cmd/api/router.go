@@ -11,7 +11,7 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/health-check", app.HealthCheckHandler)
 
 	router.HandlerFunc(http.MethodPost, "/v1/blogs", app.createBlogHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/blogs", app.showBlogHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/blogs/:id", app.showBlogHandler)
 
 	return router
 }
