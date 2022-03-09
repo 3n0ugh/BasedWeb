@@ -22,12 +22,12 @@ func ValidateBlog(v *validator.Validator, blog *Blog) {
 	v.Check(len(blog.Title) <= 80, "title", "must not be more than 80 bytes long")
 
 	v.Check(blog.Body != "", "body", "must be provided")
-	v.Check(len(blog.Body) <= 1000000, "body", "must not be more than 100000 bytes long")
+	v.Check(len(blog.Body) <= 100000, "body", "must not be more than 100000 bytes long")
 
-	v.Check(blog.Category != nil, "genres", "must be provided")
-	v.Check(len(blog.Category) >= 1, "genres", "must contain at least 1 genre")
-	v.Check(len(blog.Category) <= 5, "genres", "must not contain more than 5 genres")
-	v.Check(validator.Unique(blog.Category), "genres", "must not contain duplicate genres")
+	v.Check(blog.Category != nil, "category", "must be provided")
+	v.Check(len(blog.Category) >= 1, "category", "must contain at least 1 categories")
+	v.Check(len(blog.Category) <= 5, "category", "must not contain more than 5 categories")
+	v.Check(validator.Unique(blog.Category), "category", "must not contain duplicate categories")
 }
 
 type BlogModel struct {
