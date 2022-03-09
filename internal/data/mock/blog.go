@@ -25,7 +25,10 @@ func (b BlogModel) Insert(blog *data.Blog) error {
 }
 
 func (b BlogModel) Get(id int64) (*data.Blog, error) {
-	return nil, nil
+	if id == mockBlog.ID {
+		return mockBlog, nil
+	}
+	return nil, data.ErrRecordNotFound
 }
 
 func (b BlogModel) Update(blog *data.Blog) error {
