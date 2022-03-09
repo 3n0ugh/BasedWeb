@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/3n0ugh/BasedWeb/internal/data"
 	"github.com/3n0ugh/BasedWeb/internal/data/mock"
+	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +14,8 @@ import (
 	"testing"
 	"time"
 )
+
+// TODO: Convert to function the most used operations.
 
 func TestHealthCheckHandler(t *testing.T) {
 	app := &application{}
@@ -40,7 +44,7 @@ func TestHealthCheckHandler(t *testing.T) {
 
 	t.Run(test.name, func(t *testing.T) {
 
-		body, err := ioutil.ReadAll(w.Body)
+		body, err := ioutil.ReadAll(w.Result().Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -187,3 +191,103 @@ func TestCreateBlogHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestShowBlogHandler(t *testing.T) {
+	app := &application{
+		model: mock.NewModel(),
+	}
+
+	wantBodySuccess, err := app.prettyJSON(envelope{"blog": mock.MockBlog})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name     string
+		urlPath  string
+		param    string
+		wantCode int
+		wantBody []byte
+	}{
+		{
+			name:    "Valid ID",
+			urlPath: "/v1/blogs/",
+			param:   "11", wantCode: http.StatusOK,
+			wantBody: wantBodySuccess,
+		},
+		{
+			name:     "Valid String ID",
+			urlPath:  "/v1/blogs/\"11\"",
+			param:    "11",
+			wantCode: http.StatusOK,
+			wantBody: wantBodySuccess,
+		},
+		{
+			name:     "Negative ID",
+			urlPath:  "/v1/blogs/-11",
+			param:    "-11",
+			wantCode: http.StatusBadRequest,
+			wantBody: []byte("{\n\t\"error\": \"invalid id parameter\"\n}\n"),
+		},
+		{
+			name:     "Non-existent ID",
+			urlPath:  "/v1/blogs/12",
+			param:    "12",
+			wantCode: http.StatusNotFound,
+			wantBody: []byte("{\n\t\"error\": \"the requested resource could not be found\"\n}\n"),
+		},
+		{
+			name:     "Non-existent String ID",
+			urlPath:  "/v1/blogs/\"12\"",
+			param:    "12",
+			wantCode: http.StatusNotFound,
+			wantBody: []byte("{\n\t\"error\": \"the requested resource could not be found\"\n}\n"),
+		},
+		{
+			name:     "Decimal ID",
+			urlPath:  "/v1/blogs/1.11",
+			param:    "1.11",
+			wantCode: http.StatusBadRequest,
+			wantBody: []byte("{\n\t\"error\": \"invalid id parameter\"\n}\n"),
+		},
+		{
+			name:     "Empty ID",
+			urlPath:  "/v1/blogs/",
+			param:    "",
+			wantCode: http.StatusBadRequest,
+			wantBody: []byte("{\n\t\"error\": \"invalid id parameter\"\n}\n"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, tt.urlPath, nil)
+
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, httprouter.ParamsKey, httprouter.Params{
+				{"id", tt.param},
+			})
+			r = r.WithContext(ctx)
+
+			app.showBlogHandler(w, r)
+
+			body, err := ioutil.ReadAll(w.Result().Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if tt.wantCode != w.Result().StatusCode {
+				t.Errorf("Status Code -> want: %d; got: %d", tt.wantCode, w.Result().StatusCode)
+			}
+
+			if !reflect.DeepEqual(tt.wantBody, body) {
+				t.Errorf("Body -> want: \n%q; got: \n%q", tt.wantBody, body)
+			}
+		})
+	}
+}
+
+// TODO: Write a test for DeleteBlogHandler
+func TestDeleteBlogHandler(t *testing.T) {}
