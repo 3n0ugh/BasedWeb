@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/3n0ugh/BasedWeb/internal/validator"
 	"github.com/lib/pq"
 	"time"
@@ -49,13 +50,34 @@ func (b BlogModel) Insert(blog *Blog) error {
 }
 
 func (b BlogModel) Get(id int64) (*Blog, error) {
-	return nil, nil
+	query := `SELECT created_at, title, body, category, version FROM blogs
+		WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var blog Blog
+
+	blog.ID = id
+
+	row := b.DB.QueryRowContext(ctx, query, id)
+
+	err := row.Scan(&blog.CreatedAt, &blog.Title, &blog.Body, &blog.Category, blog.Version)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &blog, nil
 }
 
 func (b BlogModel) Update(blog *Blog) error {
 	return nil
 }
 
+// TODO: Delete blog inortder to given id from database. Also check which rows affected.
 func (b BlogModel) Delete(id int64) error {
 	return nil
 }
