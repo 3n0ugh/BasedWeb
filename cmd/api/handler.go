@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/3n0ugh/BasedWeb/internal/data"
+	"github.com/3n0ugh/BasedWeb/internal/validator"
 	"net/http"
 	"time"
 )
@@ -40,6 +41,13 @@ func (app *application) createBlogHandler(w http.ResponseWriter, r *http.Request
 		Title:    input.Title,
 		Body:     input.Body,
 		Category: input.Category,
+	}
+
+	v := validator.New()
+
+	if data.ValidateBlog(v, blog); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
 	}
 
 	err = app.model.Blog.Insert(blog)
