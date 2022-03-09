@@ -62,7 +62,7 @@ func (b BlogModel) Get(id int64) (*Blog, error) {
 
 	row := b.DB.QueryRowContext(ctx, query, id)
 
-	err := row.Scan(&blog.CreatedAt, &blog.Title, &blog.Body, &blog.Category, blog.Version)
+	err := row.Scan(&blog.CreatedAt, &blog.Title, &blog.Body, pq.Array(&blog.Category), &blog.Version)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRecordNotFound
@@ -77,7 +77,7 @@ func (b BlogModel) Update(blog *Blog) error {
 	return nil
 }
 
-// TODO: Delete blog inortder to given id from database. Also check which rows affected.
+// TODO: Delete blog inorder to given id from database. Also check which rows affected.
 func (b BlogModel) Delete(id int64) error {
 	return nil
 }
