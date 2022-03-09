@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/julienschmidt/httprouter"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -100,4 +102,15 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 	}
 
 	return nil
+}
+
+// read id from request
+func (app *application) readParamID(r *http.Request) (int64, error) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
+	if err != nil || id < 1 {
+		return -1, errors.New("invalid id parameter")
+	}
+	return id, nil
 }
