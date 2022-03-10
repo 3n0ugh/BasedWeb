@@ -36,5 +36,8 @@ func (b BlogModel) Update(blog *data.Blog) error {
 }
 
 func (b BlogModel) Delete(id int64) error {
-	return nil
+	if id == MockBlog.ID {
+		return nil
+	}
+	return data.ErrRecordNotFound
 }
