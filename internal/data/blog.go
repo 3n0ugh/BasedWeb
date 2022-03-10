@@ -77,7 +77,26 @@ func (b BlogModel) Update(blog *Blog) error {
 	return nil
 }
 
-// TODO: Delete blog inorder to given id from database. Also check which rows affected.
 func (b BlogModel) Delete(id int64) error {
+	query := `DELETE FROM blogs
+		WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	res, err := b.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	effectedRow, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if effectedRow == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }
