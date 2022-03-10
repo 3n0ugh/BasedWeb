@@ -271,5 +271,76 @@ func TestShowBlogHandler(t *testing.T) {
 	}
 }
 
-// TODO: Write a test for DeleteBlogHandler
-func TestDeleteBlogHandler(t *testing.T) {}
+func TestDeleteBlogHandler(t *testing.T) {
+	app := NewTestApplication(mock.NewModel())
+
+	wantBodySuccess, err := app.prettyJSON(envelope{"message": "blogs successfully deleted"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []TestCases{
+		{
+			name:    "Valid ID",
+			urlPath: "/v1/blogs/",
+			param:   "11", wantCode: http.StatusOK,
+			wantBody: wantBodySuccess,
+		},
+		{
+			name:     "Valid String ID",
+			urlPath:  "/v1/blogs/\"11\"",
+			param:    "11",
+			wantCode: http.StatusOK,
+			wantBody: wantBodySuccess,
+		},
+		{
+			name:     "Negative ID",
+			urlPath:  "/v1/blogs/-11",
+			param:    "-11",
+			wantCode: http.StatusBadRequest,
+			wantBody: []byte("{\n\t\"error\": \"invalid id parameter\"\n}\n"),
+		},
+		{
+			name:     "Non-existent ID",
+			urlPath:  "/v1/blogs/12",
+			param:    "12",
+			wantCode: http.StatusNotFound,
+			wantBody: []byte("{\n\t\"error\": \"the requested resource could not be found\"\n}\n"),
+		},
+		{
+			name:     "Non-existent String ID",
+			urlPath:  "/v1/blogs/\"12\"",
+			param:    "12",
+			wantCode: http.StatusNotFound,
+			wantBody: []byte("{\n\t\"error\": \"the requested resource could not be found\"\n}\n"),
+		},
+		{
+			name:     "Decimal ID",
+			urlPath:  "/v1/blogs/1.11",
+			param:    "1.11",
+			wantCode: http.StatusBadRequest,
+			wantBody: []byte("{\n\t\"error\": \"invalid id parameter\"\n}\n"),
+		},
+		{
+			name:     "Empty ID",
+			urlPath:  "/v1/blogs/",
+			param:    "",
+			wantCode: http.StatusBadRequest,
+			wantBody: []byte("{\n\t\"error\": \"invalid id parameter\"\n}\n"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			w := httptest.NewRecorder()
+			r := NewRequestWithContext(http.MethodDelete, tt.urlPath, nil, httprouter.Params{
+				{"id", tt.param},
+			})
+
+			app.deleteBlogHandler(w, r)
+
+			Check(t, w, tt)
+		})
+	}
+}
