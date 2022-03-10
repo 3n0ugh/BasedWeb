@@ -15,7 +15,48 @@ import (
 	"time"
 )
 
-// TODO: Convert to function the most used operations.
+type TestCases struct {
+	name         string
+	urlPath      string
+	param        string
+	wantCode     int
+	reqBody      data.Blog
+	envelopeName string
+	wantBody     interface{}
+}
+
+func NewTestApplication(model data.Model) *application {
+	return &application{
+		model: model,
+	}
+}
+
+func NewRequestWithContext(method string, url string, bodyJSON []byte, p httprouter.Params) *http.Request {
+	body := strings.NewReader(string(bodyJSON))
+
+	r := httptest.NewRequest(method, url, body)
+
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, httprouter.ParamsKey, p)
+	r = r.WithContext(ctx)
+
+	return r
+}
+
+func Check(t *testing.T, w *httptest.ResponseRecorder, tt TestCases) {
+	body, err := ioutil.ReadAll(w.Result().Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if tt.wantCode != w.Result().StatusCode {
+		t.Errorf("Status Code -> want: %d; got: %d", tt.wantCode, w.Result().StatusCode)
+	}
+
+	if !reflect.DeepEqual(tt.wantBody, body) {
+		t.Errorf("Body -> want: \n%q; got: \n%q", tt.wantBody, body)
+	}
+}
 
 func TestHealthCheckHandler(t *testing.T) {
 	app := &application{}
@@ -30,12 +71,7 @@ func TestHealthCheckHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	test := struct {
-		name     string
-		urlPath  string
-		wantCode int
-		wantBody []byte
-	}{
+	test := TestCases{
 		name:     "Health Check",
 		urlPath:  "/v1/health-check",
 		wantCode: http.StatusOK,
@@ -43,25 +79,12 @@ func TestHealthCheckHandler(t *testing.T) {
 	}
 
 	t.Run(test.name, func(t *testing.T) {
-
-		body, err := ioutil.ReadAll(w.Result().Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if w.Code != test.wantCode {
-			t.Errorf("status code -> want: %d; got: %d", test.wantCode, w.Code)
-		}
-		if !reflect.DeepEqual(test.wantBody, body) {
-			t.Errorf("body -> want: %q; got: %q", test.wantBody, body)
-		}
+		Check(t, w, test)
 	})
 }
 
 func TestCreateBlogHandler(t *testing.T) {
-	app := &application{
-		model: mock.NewModel(),
-	}
+	app := NewTestApplication(mock.NewModel())
 
 	type testCasesBlog struct {
 		Body     string `json:"body,omitempty"`
@@ -77,14 +100,7 @@ func TestCreateBlogHandler(t *testing.T) {
 
 	wantUrl := "/v1/blogs"
 
-	tests := []struct {
-		name         string
-		urlPath      string
-		wantCode     int
-		reqBody      data.Blog
-		envelopeName string
-		wantBody     interface{}
-	}{
+	tests := []TestCases{
 		{name: "Must Success", urlPath: wantUrl, wantCode: http.StatusCreated,
 			reqBody:      reqBody,
 			envelopeName: "blog",
@@ -166,7 +182,7 @@ func TestCreateBlogHandler(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			wantBody, err := app.prettyJSON(envelope{tt.envelopeName: tt.wantBody})
+			tt.wantBody, err = app.prettyJSON(envelope{tt.envelopeName: tt.wantBody})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -176,39 +192,20 @@ func TestCreateBlogHandler(t *testing.T) {
 
 			app.createBlogHandler(w, r)
 
-			responseBody, err := ioutil.ReadAll(w.Result().Body)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if tt.wantCode != w.Result().StatusCode {
-				t.Errorf("Status Code -> want: %d; got: %d", tt.wantCode, w.Result().StatusCode)
-			}
-
-			if !reflect.DeepEqual(wantBody, responseBody) {
-				t.Errorf("Response Body -> want: \n%q; got: \n%q", wantBody, responseBody)
-			}
+			Check(t, w, tt)
 		})
 	}
 }
 
 func TestShowBlogHandler(t *testing.T) {
-	app := &application{
-		model: mock.NewModel(),
-	}
+	app := NewTestApplication(mock.NewModel())
 
 	wantBodySuccess, err := app.prettyJSON(envelope{"blog": mock.MockBlog})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tests := []struct {
-		name     string
-		urlPath  string
-		param    string
-		wantCode int
-		wantBody []byte
-	}{
+	tests := []TestCases{
 		{
 			name:    "Valid ID",
 			urlPath: "/v1/blogs/",
@@ -263,28 +260,13 @@ func TestShowBlogHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodGet, tt.urlPath, nil)
-
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, httprouter.ParamsKey, httprouter.Params{
+			r := NewRequestWithContext(http.MethodGet, tt.urlPath, nil, httprouter.Params{
 				{"id", tt.param},
 			})
-			r = r.WithContext(ctx)
 
 			app.showBlogHandler(w, r)
 
-			body, err := ioutil.ReadAll(w.Result().Body)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if tt.wantCode != w.Result().StatusCode {
-				t.Errorf("Status Code -> want: %d; got: %d", tt.wantCode, w.Result().StatusCode)
-			}
-
-			if !reflect.DeepEqual(tt.wantBody, body) {
-				t.Errorf("Body -> want: \n%q; got: \n%q", tt.wantBody, body)
-			}
+			Check(t, w, tt)
 		})
 	}
 }
