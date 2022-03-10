@@ -85,7 +85,25 @@ func (app *application) showBlogHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// TODO: Delete blog inorder to given id
 func (app *application) deleteBlogHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readParamID(r)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
 
+	err = app.model.Blog.Delete(id)
+	if err != nil {
+		if errors.Is(err, data.ErrRecordNotFound) {
+			app.notFoundResponse(w, r)
+			return
+		}
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"message": "blogs successfully deleted"}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
