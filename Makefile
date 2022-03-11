@@ -17,7 +17,7 @@ confirm:
 ## run/api: run the cmd/api application
 .PHONY: run/api
 run/api:
-	go run ./cmd/api --port=8080 --db-dsn=${BASEDWEB_DB_DSN}
+	go run ./cmd/api --port=8080 --db-dsn=${BASEDWEB_DB_DSN} --db-max-open-conns=30 --db-max-idle-conns=30 --db-max-idle-time="17m"
 ## db/psql: connect to the database using psql
 .PHONY: db/psql
 db/psql:
