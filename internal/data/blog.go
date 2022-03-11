@@ -74,6 +74,23 @@ func (b BlogModel) Get(id int64) (*Blog, error) {
 }
 
 func (b BlogModel) Update(blog *Blog) error {
+	query := `UPDATE blogs
+		SET title = $1, body = $2, category = $3, version = version + 1
+		WHERE id = $4 AND version = $5
+		RETURNING version`
+
+	args := []interface{}{blog.Title, blog.Body, pq.Array(blog.Category), blog.ID, blog.Version}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := b.DB.QueryRowContext(ctx, query, args).Scan(&blog.Version)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrEditConflict
+		}
+		return err
+	}
 	return nil
 }
 
