@@ -20,9 +20,21 @@ type TestCases struct {
 	urlPath      string
 	param        string
 	wantCode     int
-	reqBody      data.Blog
+	reqBody      testBlog
 	envelopeName string
 	wantBody     interface{}
+}
+
+type testBlog struct {
+	Title    string
+	Body     string
+	Category []string
+}
+
+type testCasesBlog struct {
+	Body     string `json:"body,omitempty"`
+	Category string `json:"category,omitempty"`
+	Title    string `json:"title,omitempty"`
 }
 
 func NewTestApplication(model data.Model) *application {
@@ -86,13 +98,7 @@ func TestHealthCheckHandler(t *testing.T) {
 func TestCreateBlogHandler(t *testing.T) {
 	app := NewTestApplication(mock.NewModel())
 
-	type testCasesBlog struct {
-		Body     string `json:"body,omitempty"`
-		Category string `json:"category,omitempty"`
-		Title    string `json:"title,omitempty"`
-	}
-
-	reqBody := data.Blog{
+	reqBody := testBlog{
 		Title:    "gRPC in Go!",
 		Body:     "I do not know yet",
 		Category: []string{"Golang", "Network"},
@@ -114,7 +120,7 @@ func TestCreateBlogHandler(t *testing.T) {
 			}},
 		{name: "Empty Request", urlPath: wantUrl, wantCode: http.StatusUnprocessableEntity,
 			envelopeName: "error",
-			reqBody:      data.Blog{},
+			reqBody:      testBlog{},
 			wantBody: testCasesBlog{
 				Body:     "must be provided",
 				Title:    "must be provided",
@@ -122,7 +128,7 @@ func TestCreateBlogHandler(t *testing.T) {
 			}},
 		{name: "Long Title", urlPath: wantUrl, wantCode: http.StatusUnprocessableEntity,
 			envelopeName: "error",
-			reqBody: data.Blog{
+			reqBody: testBlog{
 				Title:    "How to handle panics gracefully in Golang, How to handle panics gracefully in Golang, ",
 				Body:     "I do not know yet",
 				Category: []string{"Golang", "Network"},
@@ -132,7 +138,7 @@ func TestCreateBlogHandler(t *testing.T) {
 			}},
 		{name: "Long Body", urlPath: wantUrl, wantCode: http.StatusUnprocessableEntity,
 			envelopeName: "error",
-			reqBody: data.Blog{
+			reqBody: testBlog{
 				Title:    "gRPC in Go!",
 				Body:     string(make([]byte, 100001)),
 				Category: []string{"Golang", "Network"},
@@ -142,7 +148,7 @@ func TestCreateBlogHandler(t *testing.T) {
 			}},
 		{name: "Min Category Size", urlPath: wantUrl, wantCode: http.StatusUnprocessableEntity,
 			envelopeName: "error",
-			reqBody: data.Blog{
+			reqBody: testBlog{
 				Title:    "gRPC in Go!",
 				Body:     string(make([]byte, 1)),
 				Category: []string{},
@@ -153,7 +159,7 @@ func TestCreateBlogHandler(t *testing.T) {
 		},
 		{name: "Max Category Size", urlPath: wantUrl, wantCode: http.StatusUnprocessableEntity,
 			envelopeName: "error",
-			reqBody: data.Blog{
+			reqBody: testBlog{
 				Title:    "gRPC in Go!",
 				Body:     string(make([]byte, 1)),
 				Category: []string{"Golang", "Network", "Distributed Systems", "Book", "RPC", "Complexity"},
@@ -164,7 +170,7 @@ func TestCreateBlogHandler(t *testing.T) {
 		},
 		{name: "Unique Category", urlPath: wantUrl, wantCode: http.StatusUnprocessableEntity,
 			envelopeName: "error",
-			reqBody: data.Blog{
+			reqBody: testBlog{
 				Title:    "gRPC in Go!",
 				Body:     string(make([]byte, 1)),
 				Category: []string{"Golang", "Golang"},
@@ -200,7 +206,7 @@ func TestCreateBlogHandler(t *testing.T) {
 func TestShowBlogHandler(t *testing.T) {
 	app := NewTestApplication(mock.NewModel())
 
-	wantBodySuccess, err := app.prettyJSON(envelope{"blog": mock.MockBlog})
+	wantBodySuccess, err := app.prettyJSON(envelope{"blog": mock.Blog})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -339,6 +345,120 @@ func TestDeleteBlogHandler(t *testing.T) {
 			})
 
 			app.deleteBlogHandler(w, r)
+
+			Check(t, w, tt)
+		})
+	}
+}
+
+func TestUpdateBlogHandler(t *testing.T) {
+	app := NewTestApplication(mock.NewModel())
+
+	wantBlog := mock.Blog
+	wantBlog.Body = "I will learn."
+	wantBlog.Title = "gRPC in Golang!"
+	wantBlog.Category = []string{"Golang", "Network", "Framework"}
+	wantBlog.Version = wantBlog.Version + 1
+
+	tests := []TestCases{
+		{
+			name:     "Must Success",
+			urlPath:  "/v1/blogs/11",
+			param:    "11",
+			wantCode: http.StatusOK,
+			reqBody: testBlog{
+				Title:    "gRPC in Golang!",
+				Body:     "I will learn.",
+				Category: []string{"Golang", "Network", "Framework"},
+			},
+			envelopeName: "blog",
+			wantBody:     wantBlog,
+		},
+		{
+			name:     "Negative ID",
+			urlPath:  "/v1/blogs/-11",
+			param:    "-11",
+			wantCode: http.StatusBadRequest,
+			reqBody: testBlog{
+				Title:    "gRPC in Golang!",
+				Body:     "I will learn.",
+				Category: []string{"Golang", "Network", "Framework"},
+			},
+			envelopeName: "error",
+			wantBody:     "invalid id parameter",
+		},
+		{
+			name:     "Non-existent ID",
+			urlPath:  "/v1/blogs/12",
+			param:    "12",
+			wantCode: http.StatusNotFound,
+			reqBody: testBlog{
+				Title:    "gRPC in Golang!",
+				Body:     "I will learn.",
+				Category: []string{"Golang", "Network", "Framework"},
+			},
+			envelopeName: "error",
+			wantBody:     "the requested resource could not be found",
+		},
+		{
+			name:     "Non-existent String ID",
+			urlPath:  "/v1/blogs/\"12\"",
+			param:    "12",
+			wantCode: http.StatusNotFound,
+			reqBody: testBlog{
+				Title:    "gRPC in Golang!",
+				Body:     "I will learn.",
+				Category: []string{"Golang", "Network", "Framework"},
+			},
+			envelopeName: "error",
+			wantBody:     "the requested resource could not be found",
+		},
+		{
+			name:     "Decimal ID",
+			urlPath:  "/v1/blogs/1.11",
+			param:    "1.11",
+			wantCode: http.StatusBadRequest,
+			reqBody: testBlog{
+				Title:    "gRPC in Golang!",
+				Body:     "I will learn.",
+				Category: []string{"Golang", "Network", "Framework"},
+			},
+			envelopeName: "error",
+			wantBody:     "invalid id parameter",
+		},
+		{
+			name:     "Empty ID",
+			urlPath:  "/v1/blogs/",
+			param:    "",
+			wantCode: http.StatusBadRequest,
+			reqBody: testBlog{
+				Title:    "gRPC in Golang!",
+				Body:     "I will learn.",
+				Category: []string{"Golang", "Network", "Framework"},
+			},
+			envelopeName: "error",
+			wantBody:     "invalid id parameter",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reqBodyJSON, err := json.Marshal(tt.reqBody)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			tt.wantBody, err = app.prettyJSON(envelope{tt.envelopeName: tt.wantBody})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			w := httptest.NewRecorder()
+			r := NewRequestWithContext(http.MethodPut, tt.urlPath, reqBodyJSON, httprouter.Params{
+				{"id", tt.param},
+			})
+
+			app.updateBlogHandler(w, r)
 
 			Check(t, w, tt)
 		})
