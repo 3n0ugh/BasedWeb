@@ -162,7 +162,7 @@ func (app *application) updateBlogHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusCreated, envelope{"blog": blog}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"blog": blog}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
