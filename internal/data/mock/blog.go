@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var MockBlog = &data.Blog{
+var Blog = &data.Blog{
 	ID:        11,
 	CreatedAt: time.Now(),
 	Title:     "gRPC in Go!",
@@ -18,15 +18,15 @@ type BlogModel struct {
 }
 
 func (b BlogModel) Insert(blog *data.Blog) error {
-	blog.ID = MockBlog.ID
-	blog.Version = MockBlog.Version
-	blog.CreatedAt = MockBlog.CreatedAt
+	blog.ID = Blog.ID
+	blog.Version = Blog.Version
+	blog.CreatedAt = Blog.CreatedAt
 	return nil
 }
 
 func (b BlogModel) Get(id int64) (*data.Blog, error) {
-	if id == MockBlog.ID {
-		return MockBlog, nil
+	if id == Blog.ID {
+		return Blog, nil
 	}
 	return nil, data.ErrRecordNotFound
 }
@@ -36,7 +36,7 @@ func (b BlogModel) Update(blog *data.Blog) error {
 }
 
 func (b BlogModel) Delete(id int64) error {
-	if id == MockBlog.ID {
+	if id == Blog.ID {
 		return nil
 	}
 	return data.ErrRecordNotFound
