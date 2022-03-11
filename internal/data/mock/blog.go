@@ -32,6 +32,9 @@ func (b BlogModel) Get(id int64) (*data.Blog, error) {
 }
 
 func (b BlogModel) Update(blog *data.Blog) error {
+	if blog.ID != Blog.ID {
+		return data.ErrEditConflict
+	}
 	return nil
 }
 
