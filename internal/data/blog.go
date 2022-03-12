@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/3n0ugh/BasedWeb/internal/validator"
 	"github.com/lib/pq"
 	"time"
@@ -116,4 +117,66 @@ func (b BlogModel) Delete(id int64) error {
 	}
 
 	return nil
+}
+
+func (b BlogModel) GetAll(title string, category []string, f Filter) ([]*Blog, Metadata, error) {
+	query := fmt.Sprintf(`
+		SELECT count(*) OVER(), id, created_at, title, body, category, version
+        FROM movies
+        WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1)
+		OR $1 = '')
+        AND (category @> $2 OR $2 = '{}')
+		ORDER BY %s %s, id ASC
+		LIMIT $3 OFFSET $4`, f.sortColumn(), f.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	args := []interface{}{title, pq.Array(category), f.limit(), f.offset()}
+
+	rows, err := b.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, Metadata{}, ErrRecordNotFound
+		}
+		return nil, Metadata{}, err
+	}
+
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	var totalRecords int
+	var blogs = make([]*Blog, 1)
+	//movies := []*Movie{}
+
+	for rows.Next() {
+		var blog Blog
+
+		err = rows.Scan(
+			&totalRecords,
+			&blog.ID,
+			&blog.CreatedAt,
+			&blog.Title,
+			&blog.Body,
+			pq.Array(&blog.Category),
+			&blog.Version)
+
+		if err != nil {
+			return nil, Metadata{}, err
+		}
+
+		blogs = append(blogs, &blog)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, Metadata{}, err
+	}
+
+	metadata := calculateMetadata(totalRecords, f.Page, f.PageSize)
+
+	return blogs, metadata, nil
 }
