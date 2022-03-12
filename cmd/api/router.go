@@ -18,5 +18,5 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodDelete, "/v1/blogs/:id", app.deleteBlogHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/blogs/:id", app.updateBlogHandler)
 
-	return router
+	return app.logRequest(router)
 }
