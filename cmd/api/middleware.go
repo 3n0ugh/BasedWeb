@@ -82,3 +82,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// TODO: authentication
+// TODO: requireAuthenticatedUser
+// TODO: requireActivatedUser

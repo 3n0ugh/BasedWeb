@@ -44,3 +44,5 @@ func (b BlogModel) Delete(id int64) error {
 	}
 	return data.ErrRecordNotFound
 }
+
+// TODO: Mock GetAll database function
