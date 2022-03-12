@@ -151,7 +151,6 @@ func (b BlogModel) GetAll(title string, category []string, f Filter) ([]*Blog, M
 
 	var totalRecords int
 	var blogs = make([]*Blog, 1)
-	//movies := []*Movie{}
 
 	for rows.Next() {
 		var blog Blog
