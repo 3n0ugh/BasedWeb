@@ -21,10 +21,13 @@ type Model struct {
 		Delete(id int64) error
 		GetAll(title string, category []string, f Filter) ([]*Blog, Metadata, error)
 	}
+	User interface {
+	}
 }
 
 func NewModel(db *sql.DB) Model {
 	return Model{
 		Blog: BlogModel{DB: db},
+		User: UserModel{DB: db},
 	}
 }
