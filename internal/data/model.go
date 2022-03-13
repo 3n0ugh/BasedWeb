@@ -10,7 +10,6 @@ var (
 	ErrEditConflict   = errors.New("edit conflict")
 )
 
-// TODO: Add user model
 // TODO: Add token model
 
 type Model struct {
