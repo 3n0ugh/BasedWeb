@@ -79,6 +79,18 @@ func (p *password) Set(plaintextPassword string) error {
 	return nil
 }
 
+func (p *password) Matches(plaintextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(p.hash, []byte(plaintextPassword))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
 type UserModel struct {
 	DB *sql.DB
 }
