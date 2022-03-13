@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/3n0ugh/BasedWeb/internal/validator"
 	"time"
 )
@@ -12,8 +13,10 @@ import (
 // TODO: GetForToken
 // TODO: ValidateUser -> TODO: IsAnon check
 // TODO: ValidatePassword -> TODO: SetPass and MatchPass
-// TODO: ValidateEmail
-// TODO: Custom error for duplicate email
+
+var (
+	ErrDuplicateEmail = errors.New("duplicate email")
+)
 
 var AnonymousUser = &User{}
 
