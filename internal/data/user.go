@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/3n0ugh/BasedWeb/internal/validator"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -64,6 +65,18 @@ func ValidateUser(v *validator.Validator, u *User) {
 	if u.Password.hash == nil {
 		panic("missing password hash for user")
 	}
+}
+
+func (p *password) Set(plaintextPassword string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(plaintextPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	p.plaintext = &plaintextPassword
+	p.hash = hash
+
+	return nil
 }
 
 type UserModel struct {
