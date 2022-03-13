@@ -46,3 +46,6 @@ func (b BlogModel) Delete(id int64) error {
 }
 
 // TODO: Mock GetAll database function
+func (b BlogModel) GetAll(title string, category []string, f data.Filter) ([]*data.Blog, data.Metadata, error) {
+	return nil, data.Metadata{}, nil
+}
