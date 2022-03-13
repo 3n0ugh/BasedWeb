@@ -1,6 +1,9 @@
 package data
 
-import "time"
+import (
+	"github.com/3n0ugh/BasedWeb/internal/validator"
+	"time"
+)
 
 // TODO: create user migration
 // TODO: Insert
@@ -30,4 +33,10 @@ type password struct {
 
 func (u *User) IsAnonymous() bool {
 	return u == AnonymousUser
+}
+
+func ValidatePassword(v *validator.Validator, password string) {
+	v.Check(password != "", "password", "must be provided")
+	v.Check(len(password) >= 8, "password", "must be at least 8 bytes long")
+	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
 }
