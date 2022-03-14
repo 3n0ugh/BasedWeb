@@ -122,7 +122,7 @@ func (b BlogModel) Delete(id int64) error {
 func (b BlogModel) GetAll(title string, category []string, f Filter) ([]*Blog, Metadata, error) {
 	query := fmt.Sprintf(`
 		SELECT count(*) OVER(), id, created_at, title, body, category, version
-        FROM movies
+        FROM blogs
         WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1)
 		OR $1 = '')
         AND (category @> $2 OR $2 = '{}')
